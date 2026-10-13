@@ -1,0 +1,43 @@
+name: str
+description: "A new Flutter project for Smart Order O2O."
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.2.3 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Default icons
+  cupertino_icons: ^1.0.8
+
+  # State Management & DI
+  flutter_riverpod: ^2.4.3
+  
+  # Routing
+  go_router: ^12.1.1
+  
+  # Network & API
+  dio: ^5.3.3
+  
+  # UI & Utils
+  google_fonts: ^6.1.0
+  intl: ^0.18.1
+  
+  # Core Features
+  mobile_scanner: ^3.5.2
+  cached_network_image: ^3.3.0
+  shared_preferences: ^2.2.2
+  supabase_flutter: ^2.18.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true
