@@ -1,7 +1,9 @@
+// lib/main.dart
 import 'package:flutter/material.dart';
 
 import 'screens/home_screen.dart';
 import 'screens/qr_scan_screen.dart';
+import 'screens/staff_kds_screen.dart';
 
 void main() {
   runApp(const SmartOrderApp());
@@ -82,7 +84,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     fontSize: 14,
                   ),
                 ),
-                const SizedBox(height: 36),
+                const SizedBox(height: 32),
 
                 // Form nhập liệu
                 if (!isLogin) ...[
@@ -122,7 +124,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 24),
 
-                // Nút Đăng nhập / Đăng ký
+                // Nút Đăng nhập / Đăng ký (Khách hàng)
                 ElevatedButton(
                   onPressed: () {
                     Navigator.push(
@@ -141,16 +143,18 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                   child: Text(
-                    isLogin ? 'ĐĂNG NHẬP' : 'ĐĂNG KÝ TÀI KHOẢN',
+                    isLogin
+                        ? 'ĐĂNG NHẬP KHÁCH HÀNG (UC01)'
+                        : 'ĐĂNG KÝ TÀI KHOẢN',
                     style: const TextStyle(
-                      fontSize: 16,
+                      fontSize: 15,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                 ),
                 const SizedBox(height: 12),
 
-                //Quét QR nhanh tại bàn
+                // Nút Quét QR nhanh tại bàn
                 OutlinedButton.icon(
                   onPressed: () {
                     Navigator.push(
@@ -161,7 +165,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     );
                   },
                   icon: const Icon(Icons.qr_code_scanner),
-                  label: const Text('Quét mã QR tại bàn ngay'),
+                  label: const Text('Quét mã QR tại bàn ngay (UC08)'),
                   style: OutlinedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
@@ -169,9 +173,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 8),
 
-                //chuyển đổi đăng nhập đăng kí
+                // Chuyển đổi Đăng nhập <-> Đăng ký
                 TextButton(
                   onPressed: () {
                     setState(() {
@@ -182,6 +186,40 @@ class _LoginScreenState extends State<LoginScreen> {
                     isLogin
                         ? 'Chưa có tài khoản? Đăng ký ngay'
                         : 'Đã có tài khoản? Đăng nhập',
+                  ),
+                ),
+
+                const Divider(height: 32),
+                const Text(
+                  'CỔNG NỘI BỘ DÀNH CHO NHÀ HÀNG (DEMO ĐỒ ÁN)',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey,
+                  ),
+                ),
+                const SizedBox(height: 12),
+
+                // Nút vào Phân hệ Nhân viên Bếp & Phục vụ (Chặng 5)
+                FilledButton.tonalIcon(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const StaffKdsScreen(),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.soup_kitchen_outlined),
+                  label: const Text(
+                    'Phân hệ Bếp KDS & Phục vụ (UC07, UC12-18)',
+                  ),
+                  style: FilledButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                 ),
               ],
