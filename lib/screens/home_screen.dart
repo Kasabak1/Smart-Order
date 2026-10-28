@@ -1,8 +1,8 @@
-// lib/screens/home_screen.dart
 import 'package:flutter/material.dart';
 
 import '../models/mock_data.dart';
 import 'restaurant_detail_screen.dart';
+import 'qr_scan_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -51,6 +51,24 @@ class _HomeScreenState extends State<HomeScreen> {
           child: _currentIndex == 0
               ? _buildExploreTab()
               : _buildMyBookingsTab(),
+        ),
+      ),
+
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const QrScanScreen(),
+            ),
+          );
+        },
+        backgroundColor: const Color(0xFFFF5722),
+        foregroundColor: Colors.white,
+        icon: const Icon(Icons.qr_code_scanner),
+        label: const Text(
+          'Quét QR Gọi món (UC08)',
+          style: TextStyle(fontWeight: FontWeight.bold),
         ),
       ),
       bottomNavigationBar: NavigationBar(

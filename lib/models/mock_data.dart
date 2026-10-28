@@ -4,7 +4,9 @@ class Dish {
   final double price;
   final String category;
   final String imageUrl;
-  final bool isAvailable;
+  final String description;
+  bool
+  isAvailable; // Kiểm tra tình trạng nguyên liệu (Còn món / Hết món)
 
   Dish({
     required this.id,
@@ -12,7 +14,38 @@ class Dish {
     required this.price,
     required this.category,
     required this.imageUrl,
+    this.description = 'Món ăn đặc trưng được chế biến từ nguyên liệu tươi ngon mỗi ngày.',
     this.isAvailable = true,
+  });
+}
+
+class CartItem {
+  final Dish dish;
+  int quantity;
+  String note; // Tùy chỉnh món: Ít cay, không hành...
+  String addedBy; // Giỏ hàng chung: Ai là người thêm món này
+
+  CartItem({
+    required this.dish,
+    this.quantity = 1,
+    this.note = '',
+    this.addedBy = 'Bạn',
+  });
+}
+
+class OrderItem {
+  final String id;
+  final Dish dish;
+  final int quantity;
+  final String note;
+  String status; // 'PENDING' (Chờ xác nhận), 'COOKING' (Đang nấu), 'READY' (Sẵn sàng), 'SERVED' (Đã phục vụ)
+
+  OrderItem({
+    required this.id,
+    required this.dish,
+    required this.quantity,
+    this.note = '',
+    this.status = 'PENDING',
   });
 }
 
@@ -97,7 +130,6 @@ final List<Restaurant> mockRestaurants = [
   ),
 ];
 
-//so do 9 ban mau cho moi nha hang
 final List<TableModel> mockTables = [
   TableModel(id: 't1', name: 'Bàn 01', seats: 2, status: 'AVAILABLE'),
   TableModel(id: 't2', name: 'Bàn 02', seats: 2, status: 'OCCUPIED'),
@@ -120,7 +152,6 @@ final List<TableModel> mockTables = [
   ),
 ];
 
-//danh sach luu ls dat ban cua khach
 List<BookingModel> myBookings = [];
 
 final List<Dish> mockMenu = [
@@ -129,6 +160,7 @@ final List<Dish> mockMenu = [
     name: 'Ba chỉ bò Mỹ nướng sốt Galbi',
     price: 169000,
     category: 'Món chính',
+    description: 'Thịt ba chỉ bò Mỹ thái lát vừa ăn, ướp sốt Galbi Hàn Quốc đậm đà.',
     imageUrl: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=500',
   ),
   Dish(
@@ -136,6 +168,7 @@ final List<Dish> mockMenu = [
     name: 'Pizza Burrata Phô mai tươi & Đùi heo muối',
     price: 298000,
     category: 'Món chính',
+    description: 'Đế bánh nướng củi giòn rụm kết hợp phô mai Burrata béo ngậy.',
     imageUrl: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=500',
   ),
   Dish(
@@ -143,13 +176,69 @@ final List<Dish> mockMenu = [
     name: 'Salad rong biển trứng cua',
     price: 75000,
     category: 'Khai vị',
+    description:
+        'Rau xanh Đà Lạt trộn sốt mè rang kèm trứng cua giòn tan.',
     imageUrl: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=500',
   ),
   Dish(
     id: 'd4',
+    name: 'Khoai tây chiên phủ phô mai tuyết',
+    price: 59000,
+    category: 'Khai vị',
+    description:
+        'Khoai tây chiên giòn lắc bột phô mai Hàn Quốc thơm lừng.',
+    imageUrl: 'https://images.unsplash.com/photo-1576107232684-1279f3908594?w=500',
+  ),
+  Dish(
+    id: 'd5',
+    name: 'Sườn bò Hoàng Đế rút xương (Hết hàng)',
+    price: 320000,
+    category: 'Món chính',
+    description:
+        'Phần sườn bò cao cấp nhất, hiện đang tạm hết nguyên liệu.',
+    imageUrl: 'https://images.unsplash.com/photo-1558030006-450675393462?w=500',
+    isAvailable:
+        false, // Giả lập món hết nguyên liệu theo Activity Diagram
+  ),
+  Dish(
+    id: 'd6',
     name: 'Trà đào cam sả nhiệt đới',
     price: 45000,
     category: 'Đồ uống',
+    description: 'Trà đen ủ lạnh kết hợp đào miếng giòn và hương sả thanh mát.',
     imageUrl: 'https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=500',
   ),
+  Dish(
+    id: 'd7',
+    name: 'Panna Cotta Chanh dây',
+    price: 49000,
+    category: 'Tráng miệng',
+    description:
+        'Bánh kem sữa Ý mềm mịn phủ sốt chanh dây chua ngọt.',
+    imageUrl: 'https://images.unsplash.com/photo-1488477181946-6428a0291777?w=500',
+  ),
 ];
+
+// Giỏ hàng chung của bàn hiện tại (UC10)
+List<CartItem> sharedCart = [
+  CartItem(
+    dish: mockMenu[2],
+    quantity: 1,
+    note: 'Ít sốt mè',
+    addedBy: 'Bạn cùng bàn',
+  ),
+];
+
+// Danh sách các món đã bấm "Xác nhận gửi đơn" xuống bếp (UC11)
+List<OrderItem> activeOrders = [];
+
+// Biến lưu thông tin bàn đang ngồi sau khi quét QR
+String currentActiveTable = 'Bàn 03';
+String currentActiveRestaurant = 'Lẩu Phan - Buffet Bò Úc';
+
+// Hàm định dạng tiền tệ VNĐ (Ví dụ: 169.000đ)
+String formatCurrency(double amount) {
+  final str = amount.toInt().toString();
+  final reg = RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))');
+  return '${str.replaceAllMapped(reg, (Match m) => '${m[1]}.')}đ';
+}

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'screens/home_screen.dart';
+import 'screens/qr_scan_screen.dart';
 
 void main() {
   runApp(const SmartOrderApp());
@@ -16,7 +17,7 @@ class SmartOrderApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFFFF5722), // Màu Cam chủ đạo F&B
+          seedColor: const Color(0xFFFF5722),
           primary: const Color(0xFFFF5722),
         ),
         useMaterial3: true,
@@ -35,7 +36,7 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  bool isLogin = true; //chuyen doi qua lai giua dang nhap va dki
+  bool isLogin = true;
 
   @override
   Widget build(BuildContext context) {
@@ -49,7 +50,7 @@ class _LoginScreenState extends State<LoginScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                //logo va ten nen tang
+                // Logo & Tên nền tảng
                 Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
@@ -83,7 +84,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 36),
 
-                //form nhap lieu
+                // Form nhập liệu
                 if (!isLogin) ...[
                   TextField(
                     decoration: InputDecoration(
@@ -121,7 +122,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 24),
 
-                //nut dang nhap dang ki
+                // Nút Đăng nhập / Đăng ký
                 ElevatedButton(
                   onPressed: () {
                     Navigator.push(
@@ -149,9 +150,16 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 12),
 
-                //nut quet qr nhanh tai ban
+                //Quét QR nhanh tại bàn
                 OutlinedButton.icon(
-                  onPressed: () {},
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const QrScanScreen(),
+                      ),
+                    );
+                  },
                   icon: const Icon(Icons.qr_code_scanner),
                   label: const Text('Quét mã QR tại bàn ngay'),
                   style: OutlinedButton.styleFrom(
@@ -163,7 +171,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 16),
 
-                //chuyen doi dang nhap dang ki
+                //chuyển đổi đăng nhập đăng kí
                 TextButton(
                   onPressed: () {
                     setState(() {
