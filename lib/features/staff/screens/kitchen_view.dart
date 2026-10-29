@@ -23,21 +23,26 @@ class KitchenView extends ConsumerWidget {
           Container(
             color: Colors.white,
             child: TabBar(
-              labelColor: Colors.deepOrange[800],
-              unselectedLabelColor: Colors.grey,
-              indicatorColor: Colors.deepOrange[800],
+              labelColor: const Color(0xFFD84315),
+              unselectedLabelColor: const Color(0xFF9A9FA5),
+              indicatorColor: const Color(0xFFD84315),
+              indicatorWeight: 3,
+              labelStyle: const TextStyle(fontWeight: FontWeight.w800),
               tabs: [
-                Tab(icon: const Icon(Icons.local_fire_department), text: 'Phiếu đang chế biến (${activeOrders.length})'),
-                Tab(icon: const Icon(Icons.done_all), text: 'Phiếu đã hoàn thành (${completedOrders.length})'),
+                Tab(icon: const Icon(Icons.local_fire_department_rounded), text: 'Đang chế biến (${activeOrders.length})'),
+                Tab(icon: const Icon(Icons.task_alt_rounded), text: 'Đã hoàn thành (${completedOrders.length})'),
               ],
             ),
           ),
           Expanded(
-            child: TabBarView(
-              children: [
-                _buildKitchenOrderList(context, ref, activeOrders, isHistory: false),
-                _buildKitchenOrderList(context, ref, completedOrders, isHistory: true),
-              ],
+            child: Container(
+              color: const Color(0xFFF4F5F7),
+              child: TabBarView(
+                children: [
+                  _buildKitchenOrderList(context, ref, activeOrders, isHistory: false),
+                  _buildKitchenOrderList(context, ref, completedOrders, isHistory: true),
+                ],
+              ),
             ),
           ),
         ],
@@ -51,11 +56,11 @@ class KitchenView extends ConsumerWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.soup_kitchen, size: 70, color: Colors.grey[400]),
+            Icon(Icons.soup_kitchen_outlined, size: 80, color: Colors.grey[350]),
             const SizedBox(height: 12),
             Text(
-              isHistory ? 'Chưa có phiếu hoàn thành nào.' : 'Bếp đang rảnh! Không có món chờ nấu.',
-              style: const TextStyle(color: Colors.grey, fontSize: 16),
+              isHistory ? 'Chưa có phiếu hoàn thành nào' : 'Bếp đang trống đơn! Tất cả món đã nấu xong.',
+              style: const TextStyle(color: Color(0xFF9A9FA5), fontSize: 16, fontWeight: FontWeight.w600),
             ),
           ],
         ),
@@ -67,129 +72,148 @@ class KitchenView extends ConsumerWidget {
       itemCount: orderList.length,
       itemBuilder: (context, index) {
         final order = orderList[index];
-        return Card(
-          margin: const EdgeInsets.only(bottom: 16),
-          elevation: 3,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        return Container(
+          margin: const EdgeInsets.only(bottom: 18),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 15, offset: const Offset(0, 6))],
+          ),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Ticket Header
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
                 decoration: BoxDecoration(
-                  color: isHistory ? Colors.grey[700] : Colors.deepOrange[700],
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
+                  gradient: LinearGradient(
+                    colors: isHistory
+                        ? [const Color(0xFF546E7A), const Color(0xFF37474F)]
+                        : [const Color(0xFFFF7043), const Color(0xFFD84315)],
+                  ),
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Row(
                       children: [
-                        const Icon(Icons.table_bar, color: Colors.white, size: 20),
-                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8)),
+                          child: Text(
+                            order.tableNumber,
+                            style: const TextStyle(color: Color(0xFFD84315), fontWeight: FontWeight.w900, fontSize: 14),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
                         Text(
-                          '${order.tableNumber}  •  #${order.orderId}',
-                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                          '#${order.orderId}',
+                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
                         ),
                       ],
                     ),
                     Row(
                       children: [
-                        const Icon(Icons.access_time, color: Colors.white70, size: 16),
+                        const Icon(Icons.schedule_rounded, color: Colors.white70, size: 16),
                         const SizedBox(width: 4),
-                        Text(order.createdAt, style: const TextStyle(color: Colors.white)),
+                        Text(order.createdAt, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
                       ],
                     ),
                   ],
                 ),
               ),
+
+              // Ticket Items
               Padding(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(14),
                 child: Column(
                   children: [
-                    ...order.items.map((item) {
-                      return Container(
-                        margin: const EdgeInsets.only(bottom: 8),
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: Colors.grey[50],
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: Colors.grey[300]!),
-                        ),
-                        child: Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                              decoration: BoxDecoration(
-                                color: Colors.deepOrange[100],
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Text(
-                                'x${item.quantity}',
-                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.deepOrange[900]),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(item.dishName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                                  if (item.note.isNotEmpty)
-                                    Text('⚠️ ${item.note}', style: const TextStyle(color: Colors.red, fontSize: 13, fontWeight: FontWeight.w500)),
-                                  const SizedBox(height: 4),
-                                  _buildDishStatusBadge(item.status),
-                                ],
-                              ),
-                            ),
-                            if (item.status == DishStatus.pending)
-                              ElevatedButton.icon(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.orange[800],
-                                  foregroundColor: Colors.white,
+                    ...order.items.map((item) => Container(
+                          margin: const EdgeInsets.only(bottom: 10),
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF8F9FA),
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(color: Colors.grey.shade200),
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 44,
+                                height: 44,
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFFFCCBC),
+                                  borderRadius: BorderRadius.circular(12),
                                 ),
-                                icon: const Icon(Icons.outdoor_grill, size: 18),
-                                label: const Text('Nhận nấu'),
-                                onPressed: () {
-                                  ref.read(kitchenOrdersProvider.notifier).updateDishStatus(order.orderId, item.id, DishStatus.cooking);
-                                },
-                              )
-                            else if (item.status == DishStatus.cooking)
-                              ElevatedButton.icon(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.green[700],
-                                  foregroundColor: Colors.white,
+                                child: Center(
+                                  child: Text(
+                                    'x${item.quantity}',
+                                    style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: Color(0xFFBF360C)),
+                                  ),
                                 ),
-                                icon: const Icon(Icons.notifications_active, size: 18),
-                                label: const Text('Báo xong'),
-                                onPressed: () {
-                                  ref.read(kitchenOrdersProvider.notifier).updateDishStatus(order.orderId, item.id, DishStatus.ready);
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text('Đã báo Phục vụ bưng món: ${item.dishName} (${order.tableNumber})'),
-                                      backgroundColor: Colors.green[800],
-                                      duration: const Duration(milliseconds: 900),
-                                    ),
-                                  );
-                                },
                               ),
-                          ],
-                        ),
-                      );
-                    }),
-                    if (!isHistory) ...[
-                      const Divider(),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(item.dishName, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+                                    if (item.note.isNotEmpty)
+                                      Padding(
+                                        padding: const EdgeInsets.only(top: 4),
+                                        child: Text(
+                                          '⚠️ ${item.note}',
+                                          style: const TextStyle(color: Color(0xFFE53935), fontSize: 12, fontWeight: FontWeight.w600),
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                              if (item.status == DishStatus.pending)
+                                ElevatedButton.icon(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFFFB8C00),
+                                    foregroundColor: Colors.white,
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                  ),
+                                  icon: const Icon(Icons.outdoor_grill_rounded, size: 18),
+                                  label: const Text('Nhận nấu', style: TextStyle(fontWeight: FontWeight.bold)),
+                                  onPressed: () {
+                                    ref.read(kitchenOrdersProvider.notifier).updateDishStatus(order.orderId, item.id, DishStatus.cooking);
+                                  },
+                                )
+                              else if (item.status == DishStatus.cooking)
+                                ElevatedButton.icon(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFF00C853),
+                                    foregroundColor: Colors.white,
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                  ),
+                                  icon: const Icon(Icons.notifications_active_rounded, size: 18),
+                                  label: const Text('Báo xong', style: TextStyle(fontWeight: FontWeight.bold)),
+                                  onPressed: () {
+                                    ref.read(kitchenOrdersProvider.notifier).updateDishStatus(order.orderId, item.id, DishStatus.ready);
+                                  },
+                                )
+                              else
+                                const Chip(
+                                  label: Text('Đã xong', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                                ),
+                            ],
+                          ),
+                        )),
+                    if (!isHistory)
                       Align(
                         alignment: Alignment.centerRight,
                         child: TextButton.icon(
-                          icon: const Icon(Icons.done_all, color: Colors.green),
-                          label: const Text('Hoàn thành tất cả món trong phiếu này', style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
-                          onPressed: () {
-                            ref.read(kitchenOrdersProvider.notifier).markAllReadyInOrder(order.orderId);
-                          },
+                          icon: const Icon(Icons.done_all_rounded, color: Color(0xFF00C853)),
+                          label: const Text(
+                            'Hoàn thành toàn bộ phiếu',
+                            style: TextStyle(color: Color(0xFF00C853), fontWeight: FontWeight.bold),
+                          ),
+                          onPressed: () => ref.read(kitchenOrdersProvider.notifier).markAllReadyInOrder(order.orderId),
                         ),
-                      )
-                    ]
+                      ),
                   ],
                 ),
               ),
@@ -198,34 +222,5 @@ class KitchenView extends ConsumerWidget {
         );
       },
     );
-  }
-
-  Widget _buildDishStatusBadge(DishStatus status) {
-    switch (status) {
-      case DishStatus.pending:
-        return Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-          decoration: BoxDecoration(color: Colors.red[100], borderRadius: BorderRadius.circular(6)),
-          child: Text('Chờ bếp nhận', style: TextStyle(color: Colors.red[900], fontSize: 11, fontWeight: FontWeight.bold)),
-        );
-      case DishStatus.cooking:
-        return Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-          decoration: BoxDecoration(color: Colors.amber[100], borderRadius: BorderRadius.circular(6)),
-          child: Text('🔥 Đang chế biến', style: TextStyle(color: Colors.orange[900], fontSize: 11, fontWeight: FontWeight.bold)),
-        );
-      case DishStatus.ready:
-        return Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-          decoration: BoxDecoration(color: Colors.green[100], borderRadius: BorderRadius.circular(6)),
-          child: Text('🔔 Chờ bưng ra bàn', style: TextStyle(color: Colors.green[900], fontSize: 11, fontWeight: FontWeight.bold)),
-        );
-      case DishStatus.served:
-        return Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-          decoration: BoxDecoration(color: Colors.grey[200], borderRadius: BorderRadius.circular(6)),
-          child: const Text('✓ Đã phục vụ', style: TextStyle(color: Colors.grey, fontSize: 11, fontWeight: FontWeight.bold)),
-        );
-    }
   }
 }

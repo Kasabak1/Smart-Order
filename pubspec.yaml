@@ -28,10 +28,17 @@ dependencies:
   intl: ^0.18.1
   
   # Core Features
-  mobile_scanner: ^3.5.2
+  mobile_scanner: ^7.4.2
   cached_network_image: ^3.3.0
   shared_preferences: ^2.2.2
   supabase_flutter: ^2.18.2
+  qr_flutter: ^4.1.0
+  image_picker: ^1.2.4
+  google_generative_ai: ^0.4.7
+  flutter_map: ^8.3.2
+  latlong2: ^0.10.1
+  geolocator: ^14.1.2
+  http: ^1.6.0
 
 dev_dependencies:
   flutter_test:

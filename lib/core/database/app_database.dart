@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:str/main.dart';
@@ -14,7 +15,7 @@ class AccountUser {
   final String name;
   final String phone;
   final String password;
-  final String role; // 'CUSTOMER', 'ADMIN', 'STAFF'
+  final String role; // 'CUSTOMER', 'ADMIN', 'STAFF', 'SUPER_ADMIN'
   final String subRole; // 'Phục vụ bàn', 'Bếp trưởng', 'Thu ngân'
   final String restaurantName;
 
@@ -25,10 +26,9 @@ class AccountUser {
     required this.password,
     required this.role,
     this.subRole = '',
-    this.restaurantName = 'Bếp Thái Koh Yam',
+    this.restaurantName = '', 
   });
 
-  // Chuyển đổi từ dòng dữ liệu PostgreSQL của Supabase sang Object Dart
   factory AccountUser.fromSupabase(Map<String, dynamic> row) {
     return AccountUser(
       id: row['id'].toString(),
@@ -37,7 +37,27 @@ class AccountUser {
       password: row['password'] ?? '',
       role: row['role'] ?? 'CUSTOMER',
       subRole: row['sub_role'] ?? '',
-      restaurantName: row['restaurant_name'] ?? 'Bếp Thái Koh Yam',
+      restaurantName: row['restaurant_name'] ?? '', 
+    );
+  }
+
+  // Hàm hỗ trợ cập nhật giao diện ngay lập tức khi thay đổi thông tin
+  AccountUser copyWith({
+    String? name,
+    String? phone,
+    String? password,
+    String? role,
+    String? subRole,
+    String? restaurantName,
+  }) {
+    return AccountUser(
+      id: id,
+      name: name ?? this.name,
+      phone: phone ?? this.phone,
+      password: password ?? this.password,
+      role: role ?? this.role,
+      subRole: subRole ?? this.subRole,
+      restaurantName: restaurantName ?? this.restaurantName,
     );
   }
 }
@@ -45,61 +65,23 @@ class AccountUser {
 class AccountsDatabaseNotifier extends StateNotifier<List<AccountUser>> {
   StreamSubscription<List<Map<String, dynamic>>>? _subscription;
 
-  AccountsDatabaseNotifier() : super(_defaultUsers) {
+  AccountsDatabaseNotifier() : super([]) {
     _initSupabaseConnection();
   }
-
-  static final List<AccountUser> _defaultUsers = [
-    AccountUser(
-      id: 'u1',
-      name: 'Nguyễn Văn Khách',
-      phone: '0901111111',
-      password: '123456',
-      role: 'CUSTOMER',
-    ),
-    AccountUser(
-      id: 'u2',
-      name: 'Trần Chủ Quán',
-      phone: '0902222222',
-      password: '123456',
-      role: 'ADMIN',
-      restaurantName: 'Bếp Thái Koh Yam',
-    ),
-    AccountUser(
-      id: 'u3',
-      name: 'Lê Phục Vụ',
-      phone: '0903333333',
-      password: '123456',
-      role: 'STAFF',
-      subRole: 'Phục vụ bàn',
-    ),
-    AccountUser(
-      id: 'u4',
-      name: 'Phạm Bếp Trưởng',
-      phone: '0904444444',
-      password: '123456',
-      role: 'STAFF',
-      subRole: 'Bếp trưởng',
-    ),
-  ];
 
   void _initSupabaseConnection() {
     if (!isSupabaseConfigured) return;
 
-    // Lắng nghe Realtime từ bảng `accounts` trên Supabase
     _subscription = _supabase
         .from('accounts')
         .stream(primaryKey: ['id'])
         .listen((List<Map<String, dynamic>> data) {
-      if (data.isNotEmpty) {
-        state = data.map((row) => AccountUser.fromSupabase(row)).toList();
-      }
+      state = data.map((row) => AccountUser.fromSupabase(row)).toList();
     }, onError: (err) {
       debugPrint('Lỗi stream bảng accounts: $err');
     });
   }
 
-  // Hàm kiểm tra đăng nhập
   AccountUser? login(String phone, String password) {
     for (final user in state) {
       if (user.phone == phone && user.password == password) {
@@ -113,46 +95,31 @@ class AccountsDatabaseNotifier extends StateNotifier<List<AccountUser>> {
     return state.any((u) => u.phone == phone);
   }
 
-  // Tạo tài khoản mới (Khách đăng ký hoặc Chủ quán cấp cho Nhân viên) -> Lưu lên Supabase
+  // ĐÃ SỬA: Hàm đăng ký hỗ trợ đầy đủ cho cả Chủ quán và Nhân viên
   Future<void> registerUser({
-    required String name,
-    required String phone,
-    required String password,
-    required String role,
-    String subRole = '',
-    String restaurantName = 'Bếp Thái Koh Yam',
+    required String name, 
+    required String phone, 
+    required String password, 
+    required String role, 
+    String subRole = '', 
+    String restaurantName = ''
   }) async {
-    // Cập nhật giao diện ngay lập tức (Optimistic UI)
-    final tempUser = AccountUser(
-      id: 'u_${DateTime.now().millisecondsSinceEpoch}',
-      name: name,
-      phone: phone,
-      password: password,
-      role: role,
-      subRole: subRole,
-      restaurantName: restaurantName,
-    );
-    state = [...state, tempUser];
-
     if (!isSupabaseConfigured) return;
-
     try {
       await _supabase.from('accounts').insert({
-        'name': name,
-        'phone': phone,
-        'password': password,
-        'role': role,
+        'name': name, 
+        'phone': phone, 
+        'password': password, 
+        'role': role, 
         'sub_role': subRole,
-        'restaurant_name': restaurantName,
+        'restaurant_name': restaurantName
       });
     } catch (e) {
-      debugPrint('Lỗi thêm tài khoản lên Supabase: $e');
+      debugPrint('Lỗi đăng ký: $e');
     }
   }
 
-  // Xóa tài khoản nhân viên trên Supabase
   Future<void> deleteStaff(String id) async {
-    state = state.where((u) => u.id != id).toList();
     if (!isSupabaseConfigured) return;
 
     try {
@@ -175,202 +142,235 @@ final accountsDbProvider = StateNotifierProvider<AccountsDatabaseNotifier, List<
 
 final currentUserProvider = StateProvider<AccountUser?>((ref) => null);
 
+
 // ============================================================================
 // 2. MODEL & SUPABASE SERVICE CHO THỰC ĐƠN (BẢNG: menu_items)
 // ============================================================================
 class MenuItemModel {
-  final String id;
-  final String name;
+  final String id, name, category, icon, description, restaurantName, imageUrl;
   final int price;
-  final String category;
-  final String icon;
-  final String description;
   final bool isAvailable;
 
   MenuItemModel({
-    required this.id,
-    required this.name,
-    required this.price,
-    required this.category,
-    required this.icon,
-    required this.description,
-    this.isAvailable = true,
+    required this.id, required this.name, required this.price, required this.category,
+    required this.icon, required this.description, this.isAvailable = true, 
+    required this.restaurantName, this.imageUrl = '',
   });
 
-  MenuItemModel copyWith({
-    String? name,
-    int? price,
-    String? category,
-    String? icon,
-    String? description,
-    bool? isAvailable,
-  }) {
-    return MenuItemModel(
-      id: id,
-      name: name ?? this.name,
-      price: price ?? this.price,
-      category: category ?? this.category,
-      icon: icon ?? this.icon,
-      description: description ?? this.description,
-      isAvailable: isAvailable ?? this.isAvailable,
-    );
-  }
+  MenuItemModel copyWith({bool? isAvailable}) => MenuItemModel(
+        id: id, name: name, price: price, category: category, icon: icon, description: description,
+        isAvailable: isAvailable ?? this.isAvailable, restaurantName: restaurantName, imageUrl: imageUrl,
+      );
 
-  factory MenuItemModel.fromSupabase(Map<String, dynamic> row) {
-    return MenuItemModel(
-      id: row['id'].toString(),
-      name: row['name'] ?? '',
-      price: (row['price'] as num?)?.toInt() ?? 0,
-      category: row['category'] ?? 'Món chính',
-      icon: row['icon'] ?? '🍽️',
-      description: row['description'] ?? '',
-      isAvailable: row['is_available'] ?? true,
-    );
-  }
+  factory MenuItemModel.fromSupabase(Map<String, dynamic> row) => MenuItemModel(
+        id: row['id'].toString(),
+        name: row['name'] ?? '',
+        price: (row['price'] as num?)?.toInt() ?? 0,
+        category: row['category'] ?? 'Món chính',
+        icon: row['icon'] ?? '🍽️',
+        description: row['description'] ?? '',
+        isAvailable: row['is_available'] ?? true,
+        restaurantName: row['restaurant_name'] ?? '',
+        imageUrl: row['image_url'] ?? '', 
+      );
 }
 
 class MenuDatabaseNotifier extends StateNotifier<List<MenuItemModel>> {
-  StreamSubscription<List<Map<String, dynamic>>>? _subscription;
-
-  MenuDatabaseNotifier() : super(_defaultMenu) {
-    _initSupabaseConnection();
-  }
-
-  static final List<MenuItemModel> _defaultMenu = [
-    MenuItemModel(
-      id: 'm1',
-      name: 'Phở Bò Kobe',
-      price: 99000,
-      category: 'Món chính',
-      icon: '🍜',
-      description: 'Nước dùng thanh ngọt hầm xương 24h, thịt bò Kobe mềm tan.',
-    ),
-    MenuItemModel(
-      id: 'm2',
-      name: 'Gà Rán Sốt Cay',
-      price: 55000,
-      category: 'Món ăn nhẹ',
-      icon: '🍗',
-      description: 'Gà chiên giòn rụm phủ sốt cay Hàn Quốc.',
-    ),
-    MenuItemModel(
-      id: 'm3',
-      name: 'Trà Đào Cam Sả',
-      price: 35000,
-      category: 'Đồ uống',
-      icon: '🍹',
-      description: 'Giải khát thanh mát với đào miếng giòn và hương sả.',
-    ),
-    MenuItemModel(
-      id: 'm4',
-      name: 'Bánh Mì Chảo',
-      price: 45000,
-      category: 'Món chính',
-      icon: '🥖',
-      description: 'Kèm pate gan ngỗng, trứng ốp la, xúc xích và sốt tiêu đen.',
-    ),
-    MenuItemModel(
-      id: 'm5',
-      name: 'Lẩu Thái Tomyum',
-      price: 250000,
-      category: 'Lẩu',
-      icon: '🍲',
-      description: 'Nước lẩu chua cay chuẩn vị Thái, kèm hải sản và bò Mỹ.',
-    ),
-  ];
-
-  void _initSupabaseConnection() {
+  StreamSubscription? _sub;
+  MenuDatabaseNotifier() : super([]) {
     if (!isSupabaseConfigured) return;
-
-    // Lắng nghe Realtime bảng `menu_items` từ Supabase
-    _subscription = _supabase
-        .from('menu_items')
-        .stream(primaryKey: ['id'])
-        .listen((List<Map<String, dynamic>> data) {
-      if (data.isNotEmpty) {
-        state = data.map((row) => MenuItemModel.fromSupabase(row)).toList();
-      }
-    }, onError: (err) {
-      debugPrint('Lỗi stream bảng menu_items: $err');
+    _sub = _supabase.from('menu_items').stream(primaryKey: ['id']).listen((data) {
+      state = data.map((row) => MenuItemModel.fromSupabase(row)).toList();
     });
   }
 
-  // Chủ quán thêm món mới lên Supabase
   Future<void> addMenuItem({
-    required String name,
-    required int price,
-    required String category,
-    required String icon,
-    required String description,
+    required String name, required int price, required String category, 
+    required String description, required String restaurantName, XFile? imageFile,
   }) async {
-    final cleanIcon = icon.isEmpty ? '🍽️' : icon;
-    final tempItem = MenuItemModel(
-      id: 'm_${DateTime.now().millisecondsSinceEpoch}',
-      name: name,
-      price: price,
-      category: category,
-      icon: cleanIcon,
-      description: description,
-    );
-    state = [...state, tempItem];
-
     if (!isSupabaseConfigured) return;
+    
+    String finalImageUrl = '';
 
     try {
+      if (imageFile != null) {
+        final bytes = await imageFile.readAsBytes();
+        final fileExt = imageFile.name.split('.').last;
+        final fileName = '${DateTime.now().millisecondsSinceEpoch}.$fileExt';
+
+        await _supabase.storage.from('menu_images').uploadBinary(
+          fileName,
+          bytes,
+          fileOptions: FileOptions(contentType: 'image/$fileExt'),
+        );
+        finalImageUrl = _supabase.storage.from('menu_images').getPublicUrl(fileName);
+      }
+
       await _supabase.from('menu_items').insert({
-        'name': name,
-        'price': price,
+        'name': name, 
+        'price': price, 
         'category': category,
-        'icon': cleanIcon,
-        'description': description,
-        'is_available': true,
+        'description': description, 
+        'is_available': true, 
+        'restaurant_name': restaurantName,
+        'image_url': finalImageUrl, 
+        'icon': '🍽️',
       });
     } catch (e) {
-      debugPrint('Lỗi thêm món ăn lên Supabase: $e');
+      debugPrint('Lỗi thêm món ăn: $e');
     }
   }
 
-  // Bật / Tắt trạng thái còn món trên Supabase
   Future<void> toggleAvailability(String id) async {
-    final target = state.firstWhere((item) => item.id == id);
-    final newStatus = !target.isAvailable;
-
-    state = [
-      for (final item in state)
-        if (item.id == id) item.copyWith(isAvailable: newStatus) else item
-    ];
-
     if (!isSupabaseConfigured) return;
-
-    try {
-      await _supabase
-          .from('menu_items')
-          .update({'is_available': newStatus})
-          .eq('id', id);
-    } catch (e) {
-      debugPrint('Lỗi cập nhật trạng thái món trên Supabase: $e');
-    }
+    final newStatus = !state.firstWhere((i) => i.id == id).isAvailable;
+    await _supabase.from('menu_items').update({'is_available': newStatus}).eq('id', id);
   }
 
-  // Xóa món ăn trên Supabase
   Future<void> deleteMenuItem(String id) async {
-    state = state.where((item) => item.id != id).toList();
     if (!isSupabaseConfigured) return;
-
-    try {
-      await _supabase.from('menu_items').delete().eq('id', id);
-    } catch (e) {
-      debugPrint('Lỗi xóa món trên Supabase: $e');
-    }
+    await _supabase.from('menu_items').delete().eq('id', id);
   }
 
-  @override
-  void dispose() {
-    _subscription?.cancel();
-    super.dispose();
+  @override void dispose() { _sub?.cancel(); super.dispose(); }
+}
+
+final menuDbProvider = StateNotifierProvider<MenuDatabaseNotifier, List<MenuItemModel>>((ref) => MenuDatabaseNotifier());
+
+
+// ============================================================================
+// 3. ĐÁNH GIÁ NHÀ HÀNG (BẢNG: reviews)
+// ============================================================================
+class ReviewModel {
+  final String id, restaurantName, userName, comment;
+  final int rating;
+  final DateTime createdAt;
+
+  ReviewModel({required this.id, required this.restaurantName, required this.userName, required this.rating, required this.comment, required this.createdAt});
+
+  factory ReviewModel.fromSupabase(Map<String, dynamic> row) {
+    return ReviewModel(
+      id: row['id'].toString(),
+      restaurantName: row['restaurant_name'] ?? '',
+      userName: row['user_name'] ?? 'Khách',
+      rating: (row['rating'] as num?)?.toInt() ?? 5,
+      comment: row['comment'] ?? '',
+      createdAt: DateTime.parse(row['created_at']),
+    );
   }
 }
 
-final menuDbProvider = StateNotifierProvider<MenuDatabaseNotifier, List<MenuItemModel>>((ref) {
-  return MenuDatabaseNotifier();
-});
+class ReviewsNotifier extends StateNotifier<List<ReviewModel>> {
+  StreamSubscription? _sub;
+
+  ReviewsNotifier() : super([]) {
+    if (!isSupabaseConfigured) return;
+    _sub = _supabase
+        .from('reviews')
+        .stream(primaryKey: ['id'])
+        .order('created_at', ascending: false)
+        .listen((data) {
+      state = data.map((row) => ReviewModel.fromSupabase(row)).toList();
+    });
+  }
+
+  Future<bool> addReview(String restaurantName, String userName, int rating, String comment) async {
+    if (!isSupabaseConfigured) return false;
+    try {
+      await _supabase.from('reviews').insert({
+        'restaurant_name': restaurantName,
+        'user_name': userName,
+        'rating': rating,
+        'comment': comment,
+      });
+      return true;
+    } catch (e) {
+      debugPrint('Lỗi thêm đánh giá DB: $e');
+      return false;
+    }
+  }
+
+  @override void dispose() { _sub?.cancel(); super.dispose(); }
+}
+
+final reviewsProvider = StateNotifierProvider<ReviewsNotifier, List<ReviewModel>>((ref) => ReviewsNotifier());
+
+
+// ============================================================================
+// 4. QUẢN LÝ HỒ SƠ NHÀ HÀNG VÀ XÉT DUYỆT (BẢNG: restaurants)
+// ============================================================================
+class RestaurantModel {
+  final String id, ownerPhone, name, address, category, openTime, imageUrl, status;
+  final double lat, lng, rating;
+
+  RestaurantModel({required this.id, required this.ownerPhone, required this.name, required this.address, required this.category, required this.openTime, required this.imageUrl, required this.lat, required this.lng, required this.rating, required this.status});
+
+  factory RestaurantModel.fromSupabase(Map<String, dynamic> row) {
+    return RestaurantModel(
+      id: row['id'].toString(),
+      ownerPhone: row['owner_phone'] ?? '',
+      name: row['name'] ?? '',
+      address: row['address'] ?? '',
+      category: row['category'] ?? 'Đang cập nhật',
+      openTime: row['open_time'] ?? '08:00 - 22:00',
+      imageUrl: row['image_url'] ?? '',
+      lat: (row['lat'] as num?)?.toDouble() ?? 21.0285,
+      lng: (row['lng'] as num?)?.toDouble() ?? 105.8048,
+      rating: (row['rating'] as num?)?.toDouble() ?? 5.0,
+      status: row['status'] ?? 'PENDING', // PENDING, APPROVED, REJECTED
+    );
+  }
+}
+
+class RestaurantListNotifier extends StateNotifier<List<RestaurantModel>> {
+  StreamSubscription? _sub;
+  
+  RestaurantListNotifier() : super([]) {
+    if (!isSupabaseConfigured) return;
+    _sub = _supabase.from('restaurants').stream(primaryKey: ['id']).listen((data) {
+      state = data.map((row) => RestaurantModel.fromSupabase(row)).toList();
+    });
+  }
+
+  // Hàm cho Chủ quán gửi yêu cầu phê duyệt hồ sơ lần đầu hoặc cập nhật
+  Future<bool> submitStoreProfile(String ownerPhone, String name, String address, String category, String openTime, double lat, double lng) async {
+    try {
+      final existing = await _supabase.from('restaurants').select().eq('owner_phone', ownerPhone);
+      
+      if (existing.isEmpty) {
+        await _supabase.from('restaurants').insert({
+          'owner_phone': ownerPhone, 'name': name, 'address': address, 'category': category, 'open_time': openTime, 'lat': lat, 'lng': lng, 'status': 'PENDING'
+        });
+      } else {
+        await _supabase.from('restaurants').update({
+          'name': name, 'address': address, 'category': category, 'open_time': openTime, 'lat': lat, 'lng': lng, 'status': 'PENDING'
+        }).eq('owner_phone', ownerPhone);
+      }
+      
+      // Đồng bộ tên nhà hàng sang bảng tài khoản (rất quan trọng)
+      await _supabase.from('accounts').update({'restaurant_name': name}).eq('phone', ownerPhone);
+      
+      return true;
+    } catch (e) {
+      debugPrint('Lỗi Gửi duyệt quán: $e');
+      return false;
+    }
+  }
+
+  // Hàm cho Super Admin đổi trạng thái duyệt (APPROVED, REJECTED)
+  Future<bool> changeRestaurantStatus(String id, String newStatus) async {
+    if (!isSupabaseConfigured) return false;
+    try {
+      await _supabase.from('restaurants').update({'status': newStatus}).eq('id', id);
+      return true;
+    } catch (e) {
+      debugPrint('Lỗi đổi trạng thái quán: $e');
+      return false;
+    }
+  }
+
+  @override void dispose() { _sub?.cancel(); super.dispose(); }
+}
+
+// Provider này phục vụ danh sách cửa hàng cho Khách (Chỉ hiển thị quán APPROVED) và Super Admin
+final realRestaurantListProvider = StateNotifierProvider<RestaurantListNotifier, List<RestaurantModel>>((ref) => RestaurantListNotifier());

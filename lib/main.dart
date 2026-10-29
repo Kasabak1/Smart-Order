@@ -3,13 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'routes/app_router.dart';
 
-// ============================================================================
-// ĐIỀN URL VÀ ANON KEY TỪ TRANG SUPABASE CỦA BẠN VÀO ĐÂY:
-// ============================================================================
 const String supabaseUrl = 'https://mddalpadojitipwzdwqi.supabase.co';
 const String supabaseAnonKey = 'sb_publishable_Vm5M8pjb4s9_xQqX7voaZw_LFlU8-00';
 
-// Biến kiểm tra xem đã cấu hình Supabase thật hay chưa
 bool isSupabaseConfigured = false;
 
 Future<void> main() async {
@@ -47,7 +43,7 @@ class MyApp extends ConsumerWidget {
     final router = ref.watch(appRouterProvider);
 
     return MaterialApp.router(
-      title: 'Smart Order O2O',
+      title: 'Smart Restaurant Order ',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.orange),
         useMaterial3: true,
